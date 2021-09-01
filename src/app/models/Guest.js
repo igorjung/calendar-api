@@ -7,7 +7,7 @@ class Guest extends Model {
       {
         // Associantions
         user_id: Sequelize.INTEGER,
-        guest_id: Sequelize.INTEGER,
+        event_id: Sequelize.INTEGER,
       },
       {
         modelName: 'guests',
@@ -24,9 +24,9 @@ class Guest extends Model {
       foreignKey: 'user_id',
       as: 'user',
     });
-    this.belongsTo(models.guests, {
-      foreignKey: 'guest_id',
-      as: 'guest',
+    this.belongsTo(models.events, {
+      foreignKey: 'event_id',
+      as: 'event',
     });
   }
 }

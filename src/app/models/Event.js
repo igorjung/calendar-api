@@ -12,7 +12,7 @@ class Event extends Model {
         end_at: Sequelize.DATE,
 
         // Associantions
-        recipe_id: Sequelize.INTEGER,
+        user_id: Sequelize.INTEGER,
       },
       {
         modelName: 'events',
@@ -29,6 +29,7 @@ class Event extends Model {
       foreignKey: 'user_id',
       as: 'user',
     });
+    this.hasMany(models.guests);
   }
 }
 

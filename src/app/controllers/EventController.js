@@ -24,7 +24,6 @@ class EventController {
       where.user_id = userId;
       where_guest.user_id = userId;
     }
-
     if (start && end) {
       where.start_at = {
         [Op.gte]: start,
@@ -41,15 +40,21 @@ class EventController {
         {
           model: Guest,
           as: 'guests',
-          where: where_guest,
           required: false,
           include: [
             {
               model: User,
               as: 'user',
               required: false,
+              attributes: { include: ['name', 'email'] },
             },
           ],
+        },
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: { include: ['name', 'email'] },
         },
       ],
       where,
@@ -60,7 +65,37 @@ class EventController {
       });
     }
 
-    return response.json(events);
+    // Guest's Events Exists Validation
+    delete where.user_id;
+    const guestEvents = await Event.findAll({
+      order: [['createdAt', 'asc']],
+      include: [
+        {
+          model: Guest,
+          as: 'guests',
+          required: true,
+          where: where_guest,
+          include: [
+            {
+              model: User,
+              as: 'user',
+              required: false,
+              attributes: { include: ['name', 'email'] },
+            },
+          ],
+        },
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: { include: ['name', 'email'] },
+        },
+      ],
+      where,
+    });
+
+    const list = [...events, ...guestEvents];
+    return response.json(list);
   }
 
   async show(request, response) {
@@ -73,12 +108,21 @@ class EventController {
         {
           model: Guest,
           as: 'guests',
+          required: false,
           include: [
             {
               model: User,
               as: 'user',
+              required: false,
+              attributes: { include: ['name', 'email'] },
             },
           ],
+        },
+        {
+          model: User,
+          as: 'user',
+          required: false,
+          attributes: { include: ['name', 'email'] },
         },
       ],
       where: { id },
@@ -113,11 +157,19 @@ class EventController {
       });
     }
 
+    // Add User Id
+    const { authorization } = request.headers;
+    const auth = authorization.split(' ')[1];
+    const decoded = jwt.verify(auth, authConfig.secret);
+    const userId = decoded.id;
+    data.user_id = userId;
+
     // Check Events Same Dates
     const events = await Event.findAll({
       where: {
         start_at: { [Op.gte]: data.start_at },
         end_at: { [Op.lte]: data.end_at },
+        user_id: data.user_id,
       },
     });
     if (events && events.length) {
@@ -127,16 +179,30 @@ class EventController {
       });
     }
 
-    // Add User Id
-    const { authorization } = request.headers;
-    const auth = authorization.split(' ')[1];
-    const decoded = jwt.verify(auth, authConfig.secret);
-    const userId = decoded.id;
-    data.user_id = userId;
+    // Check Guest Events Same Dates
+    const guestEvents = await Event.findAll({
+      where: {
+        start_at: { [Op.gte]: data.start_at },
+        end_at: { [Op.lte]: data.end_at },
+      },
+      include: [
+        {
+          model: Guest,
+          as: 'guests',
+          required: true,
+          where: { user_id: data.user_id },
+        },
+      ],
+    });
+    if (guestEvents && guestEvents.length) {
+      return response.status(400).json({
+        error:
+          'Falha no cadastro do evento, já existe um evento cadastrado nesse período',
+      });
+    }
 
     // Post
     const event = await Event.create(data);
-
     return response.json(event);
   }
 
@@ -198,7 +264,6 @@ class EventController {
 
     // Put
     await event.update(request.body);
-
     return response.json(event);
   }
 
@@ -216,7 +281,6 @@ class EventController {
 
     // Destroy
     await event.destroy();
-
     return response.json();
   }
 }

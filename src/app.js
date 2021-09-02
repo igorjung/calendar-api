@@ -19,11 +19,7 @@ class App {
   }
 
   middlewares() {
-    this.server.use(
-      cors({
-        origin: ['https://recipe-notes.netlify.app'],
-      })
-    );
+    this.server.use(cors());
     this.server.use(express.json());
   }
 

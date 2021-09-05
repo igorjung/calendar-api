@@ -1,10 +1,5 @@
 // Dependencies
 import * as Yup from 'yup';
-import { Op } from 'sequelize';
-import jwt from 'jsonwebtoken';
-
-// Configs
-import authConfig from '../../config/auth';
 
 // Models
 import Guest from '../models/Guest';

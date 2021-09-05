@@ -2,6 +2,7 @@
 import AuthController from './app/controllers/AuthController';
 import EventController from './app/controllers/EventController';
 import GuestController from './app/controllers/GuestController';
+import UserController from './app/controllers/UserController';
 
 // Middlewares
 import token from './app/middlewares/token';
@@ -30,5 +31,8 @@ routes.get('/guests/:id', token, GuestController.show);
 routes.post('/guests', token, GuestController.store);
 routes.put('/guests/:id', token, GuestController.update);
 routes.delete('/guests/:id', token, GuestController.delete);
+
+// Guests
+routes.get('/users', token, UserController.index);
 
 export default routes;

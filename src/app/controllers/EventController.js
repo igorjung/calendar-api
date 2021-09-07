@@ -24,6 +24,7 @@ class EventController {
       where.user_id = userId;
       where_guest.user_id = userId;
     }
+
     if (start && end) {
       where.start_at = {
         [Op.gte]: start,
@@ -280,6 +281,7 @@ class EventController {
     }
 
     // Destroy
+    await Guest.destroy({ where: { event_id: id } });
     await event.destroy();
     return response.json();
   }
